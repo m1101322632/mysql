@@ -1,0 +1,95 @@
+<div id="docs-main-inner">
+
+                <div class="right" id="docs-version-nav">
+            <a href="#" id="docs-version-nav-toggle">version 5.6
+            <span class="icon-chevron-down"></span></a>
+            <div id="docs-version-list">
+                            </div>
+        </div>
+        
+        <div id="docs-show-nav" class="left hidden" style="margin-right: 15px;">
+            <a class="docs-show-hide-nav" href="" title="Show Sidebar"><span class="icon-arrow-small-right"></span></a>
+        </div>
+
+                        <div id="docs-breadcrumbs">
+            <a href="/doc/refman/5.6/en/">MySQL 5.6 参考指南</a> &nbsp;/&nbsp;
+                                                        <a href="replication.html">主从同步</a> &nbsp;/&nbsp;
+                                                                                    主从同步配置
+                                    </div>
+        
+        <div id="docs-body">
+        
+<div class="section">
+
+<div class="titlepage">
+<div>
+<div>
+<h2 class="title"><a name="replication-configuration"></a>17.1&nbsp;主从同步配置</h2>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="toc">
+<p><small>[<a href="#" class="tocdetail" onclick="toggle('tocdetail-0'); return false;" onkeypress="if (event.keyCode == 13) { toggle('tocdetail-0'); return false;}">+/-</a>]</small></p>
+<dl id="tocdetail-0"><dt><span class="section"><a href="replication-howto.html">17.1.1 如何建立主从同步</a></span></dt><dt><span class="section"><a href="replication-formats.html">17.1.2 主从同步格式</a></span></dt><dt><span class="section"><a href="replication-gtids.html">17.1.3 主从同步与全局事务</a></span></dt><dt><span class="section"><a href="replication-options.html">17.1.4 主从同步与二进制日志选项和变量 </a></span></dt><dt><span class="section"><a href="replication-administration.html">17.1.5 通用的主从同步管理任务</a></span></dt></dl>
+</div>
+<p>
+    在MySql中进行服务器间的主从同步是基于二进制日志机制进行的。MySql中主服务器实例将更新和改变以事件的形式写入到二进制日志里。依据数据库被记录的变更来将信息以不同的格式存储到二进制日志里。
+	从服务器被配置成从主服务器读取二进制日志并在从服务器本地数据库上执行二进制日志里的事件。
+</p>
+<div class="important" style="margin-left: 0.5in; margin-right: 0.5in;">
+
+<div class="admon-title">
+重点
+</div>
+<p>
+      你不能配置主服务器使其只记录特定的事件。
+</p>
+</div>
+<p>
+    主服务器在这个方案中是沉默的. 一旦二进制日志被启用，所有的陈述语句都被记录在二进制文件中。
+	每个从服务器接收到一个该二进制日志文件的完整副本。 决定执行二进制文件中的哪一个陈述语句是从服务器的职责；你不可以配置主服务器使其只记录指定的事件。
+	如果你没有特别指定，从服务器会执行主服务器二进制日志中的所有事件。如有有需要，你可以配置从服务器只处理主服务器二进制日志中特定的数据库或表上事件。 
+  </p><p>
+    每一个从服务器维护一个记录来存储二进制日志坐标：主服务器二进制日志文件已经被读取和处理的部分的名称和位置。这说明多台从服务器可以连接到主服务器并执行
+    相同的二进制日志文件的不同部分。因为是从服务器控制这个进程，单独的从服务器可以在不影响主服务器的操作的情况下和主服务器进行连接或者断开连接。同样，因
+	为每一个从服务器记录二进制日志文件的当前处理位置，使得从服务器断开连接、重新连接并恢复处理变得可以实现。
+  </p><p>
+    主服务器和每一个从服务器必须使用唯一的身份ID进行配置（使用server-id选项）。另外，每一个从服务器必须配置主服务器的主机名、日志名、和日志所在位置。这些
+	细节可以在从服务器的MySql会话中使用CHANGE MASTER TO语句来实现。这些细节以表或文件的形式存储在从服务器的主服务器信息仓库里。
+  </p><p>
+    这个部分描述了一个主从同步必须的配置和创建方法，包含创建一个新的主从同步环境的一步接一步的介绍。
+    主要的组件如下：
+</p>
+<div class="itemizedlist">
+<ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
+        作为一个建立两个或多个服务器间的主从同步的指南，章节17.1.1“如何建立主从同步”，处理系统的配置并提供将数据从主服务器复制到从服务器的多种方法。
+      </p></li><li class="listitem"><p>
+	    二进制日志中的事件以多种格式进行记录。涉及到基于语句的主从同步和基于行的主从同步。
+        第三种类型，混合格式主从同步，在合适的时机充分利用基于语句的主从同步和基于行的主从同步的好处来自动的使用基于语句的主从同步或基于行的主从同步。
+		不同的格式将在17.1.2“主从同步格式”章节进行讨论.
+      </p></li><li class="listitem"><p>
+	    对于应用于主从同步的不同配置选项和变量信息将在17.1.4 “主从同步和二进制日志和变量”章节中进行讨论。
+      </p></li><li class="listitem"><p>
+	    主从同步开始之后，主从同步进程需要进行少量的管理和监控。
+        Once started, the replication process should require little
+        administration or monitoring. 关于你想执行的常见任务的建议，可以参考17.1.5 “常见主从同步任务管理”章节
+</p></li></ul>
+</div>
+</div><br>
+        </div>
+
+                <div id="docs-in-page-nav-container">
+            <div id="docs-in-page-nav">
+                
+    <a href="replication.html" title="Previous: Replication"><span class="icon-chevron-left"></span> PREV</a> &nbsp;
+<a href="index.html" title="Start"> HOME</a> &nbsp;
+        <a href="replication.html" title="Up: Replication"> UP</a> &nbsp;
+    <a href="replication-howto.html" title="Next: How to Set Up Replication">NEXT <span class="icon-chevron-right"></span></a>
+            </div>
+        </div>
+        
+</div>
