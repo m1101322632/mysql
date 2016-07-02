@@ -1,0 +1,99 @@
+<div id="docs-main-inner">
+
+                <div class="right" id="docs-version-nav">
+            <a href="" id="docs-version-nav-toggle">version 5.6
+            <span class="icon-chevron-down"></span></a>
+            <div id="docs-version-list"> </div>
+        </div>
+        
+        <div id="docs-show-nav" class="left hidden" style="margin-right: 15px;">
+            <a class="docs-show-hide-nav" href="" title="Show Sidebar"><span class="icon-arrow-small-right"></span></a>
+        </div>
+
+                        <div id="docs-breadcrumbs">
+            <a href="/doc/refman/5.6/en/">MySQL 5.6 参考手册</a> &nbsp;/&nbsp;
+                            <span id="breadcrumbs-link"><a href="" id="show-breadcrumbs">...</a> &nbsp;/&nbsp;</span>
+                <span class="hidden" id="hidden-breadcrumbs">
+                                                        <a href="replication.html">主从同步</a> &nbsp;/&nbsp;
+                                                            <a href="replication-configuration.html">主从同步配置</a> &nbsp;/&nbsp;
+                                                            <a href="replication-howto.html">如何建立主从同步机制</a> &nbsp;/&nbsp;
+                                                                                        </span>
+                                        在新的主服务器和从服务器上建立主从同步
+                                    </div>
+        
+        <div id="docs-body">
+        
+<div class="section">
+<div class="titlepage">
+<div>
+<div>
+<h4 class="title"><a name="replication-howto-newservers"></a>17.1.1.7&nbsp;在新的主服务器和从服务器上建立主从同步</h4>
+
+</div>
+
+</div>
+
+</div>
+<p>
+        建立主从同步最简单且最直接的方法时使用新的主服务器和从服务器。
+      </p><p>
+	    你同样可以使用这个方法来处理新服务器建立主从同步且有已存在的备份数据要导入到数据库中的情况。通过将数据导入进新的主服务器，数据会自动的同步到
+		从服务器上。
+      </p><p>
+	    在新的主服务器和从服务器上建立主从同步：
+</p>
+<div class="orderedlist">
+<ol class="orderedlist" type="1"><li class="listitem"><p>
+            在MySQL主服务器上做必须的属性配置。详见章节17.1.1.1，“设置主从同步中的主服务器的配置”。
+			
+          </p></li><li class="listitem"><p>
+            开启主服务器。
+          </p></li><li class="listitem"><p>
+            建立一个单独的用户。详见章节 17.1.1.3，“为主从同步创建独立的用户”。
+          </p></li><li class="listitem"><p>
+		    获取主服务器状态信息。详见章节 17.1.1.4，“获取主从同步主服务器二进制日志坐标”。
+          </p></li><li class="listitem"><p>
+		    在主服务器上，释放读锁：
+          </p><pre class="programlisting"><div class="docs-select-all" style="display: none;"><div class="copy-help left" style="display: none;">Press CTRL+C to copy</div> <div class="right"><a href="" title="Select All" id="sa2082881"><span class="icon-clipboard"></span></a></div></div>mysql&gt; <strong class="userinput"><code>UNLOCK TABLES;</code></strong>
+</pre></li><li class="listitem"><p>
+            在从服务器上，编辑MySQL配置信息。详见章节 17.1.1.2，“配置主从同步从服务器信息”。
+          </p></li><li class="listitem"><p>
+		    启动从服务器。
+          </p></li><li class="listitem"><p>
+		    在从服务器上通过执行一个<a class="link" href="change-master-to.html" title="13.4.2.1&nbsp;CHANGE MASTER TO Syntax"><code class="literal">CHANGE MASTER TO</code></a>
+			命令来设置主服务器配置信息。详见章节 17.1.1.10，“在从服务器上设置主服务器的配置信息”。
+</p></li></ol>
+</div>
+<p>
+        在每一个从服务器上执行设置步骤。
+      </p><p>
+	    因为
+        Because there is no data to load or exchange on a new server
+        configuration you do not need to copy or import any information.
+      </p><p>
+        If you are setting up a new replication environment using the
+        data from a different existing database server, you will now
+        need to run the dump file generated from that server on the new
+        master. The database updates will automatically be propagated to
+        the slaves:
+      </p><pre class="programlisting"><div class="docs-select-all" style="display: none;"><div class="copy-help left" style="display: none;">Press CTRL+C to copy</div> <div class="right"><a href="" title="Select All" id="sa36709077"><span class="icon-clipboard"></span></a></div></div>shell&gt; <strong class="userinput"><code>mysql -h master &lt; fulldb.dump</code></strong>
+</pre>
+</div>
+<br>
+        </div>
+
+                <div id="docs-in-page-nav-container">
+            <div id="docs-in-page-nav">
+                
+    <a href="replication-howto-rawdata.html" title="Previous: Creating a Data Snapshot Using Raw Data Files"><span class="icon-chevron-left"></span> PREV</a> &nbsp;
+<a href="index.html" title="Start"> HOME</a> &nbsp;
+        <a href="replication-howto.html" title="Up: How to Set Up Replication"> UP</a> &nbsp;
+    <a href="replication-howto-existingdata.html" title="Next: Setting Up Replication with Existing Data">NEXT <span class="icon-chevron-right"></span></a>
+            </div>
+        </div>
+        
+         
+
+                     
+
+              </div>

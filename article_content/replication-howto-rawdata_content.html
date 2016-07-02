@@ -1,0 +1,152 @@
+<div id="docs-main-inner">
+
+                <div class="right" id="docs-version-nav">
+            <a href="" id="docs-version-nav-toggle">version 5.6
+            <span class="icon-chevron-down"></span></a>
+            <div id="docs-version-list">
+                                                        <a class="tooltip-left" data-tooltip="The page you are viewing does not exist in version 5.7.
+                        This link will take you to the Table of Contents." href="/doc/refman/5.7/en/">
+                        5.7
+                                                &nbsp;current
+                                            </a><br>
+                                                                                                                <a href="/doc/refman/5.5/en/replication-howto-rawdata.html">
+                        5.5
+                                            </a><br>
+                                                                        <div id="docs-version-nav-lang">
+                                                                                                                                                    <a href="/doc/refman/5.6/ja/replication-howto-rawdata.html">
+                                    5.6&nbsp;
+                                                                            Japanese
+                                                                    </a><br>
+                                                                                            </div>
+                            </div>
+        </div>
+        
+        <div id="docs-show-nav" class="left hidden" style="margin-right: 15px;">
+            <a class="docs-show-hide-nav" href="" title="Show Sidebar"><span class="icon-arrow-small-right"></span></a>
+        </div>
+
+                        <div id="docs-breadcrumbs">
+            <a href="/doc/refman/5.6/en/">MySQL 5.6 参考手册</a> &nbsp;/&nbsp;
+                            <span id="breadcrumbs-link"><a href="" id="show-breadcrumbs">...</a> &nbsp;/&nbsp;</span>
+                <span class="hidden" id="hidden-breadcrumbs">
+                                                        <a href="replication.html">主从同步</a> &nbsp;/&nbsp;
+                                                            <a href="replication-configuration.html">主从同步配置</a> &nbsp;/&nbsp;
+                                                            <a href="replication-howto.html">如何建立主从同步</a> &nbsp;/&nbsp;
+                                                                                        </span>
+                                        从原始数据文件创建数据快照
+                                    </div>
+        
+        <div id="docs-body">
+        
+<div class="section">
+<div class="titlepage">
+<div>
+<div>
+<h4 class="title"><a name="replication-howto-rawdata"></a>17.1.1.6&nbsp; 从原始数据文件创建数据快照</h4>
+
+</div>
+
+</div>
+
+</div>
+<p>
+        如果你的数据库比较大，直接复制原始数据文件将比使用mysqldump并在每个从服务器上导入更高效。这个=技术跳过了重新执行插入操作时索引更新的开销。
+      </p><p>
+	    在拥有复杂的缓存和逻辑算法的存储引擎的表上使用这个方法需要额外的步骤来生产一个完美的“时间点”快照：原始的复制命令可能会遗漏缓存信息和日志
+		的更新，即使你已经捕获了一个全局的读锁。存储引擎如何对这个问题进行响应取决于它自己的故障修复能力。
+      </p><p>
+        
+        在你复制带有全文索引的存储引擎时，如果主服务器和从服务器在下面这三个参数上取值不同：
+        <a class="link" href="server-system-variables.html#sysvar_ft_stopword_file"><code class="literal">ft_stopword_file</code></a>,
+        <a class="link" href="server-system-variables.html#sysvar_ft_min_word_len"><code class="literal">ft_min_word_len</code></a>, 
+        <a class="link" href="server-system-variables.html#sysvar_ft_max_word_len"><code class="literal">ft_max_word_len</code></a> ,
+		时，使用这种方法执行的结果不可靠。
+      </p><p>
+	    如果你用的是InnoDB表，你可以使用MySQL企业版的备份组件中的mysqlbackup来生产一个一致的快照。这个命令记录了快照的日志名称和偏移用以在后面的
+		从服务器上进行配置。MySQL Enterprise
+        Backup 是一个包含在MySQL企业版订阅中的商业产品. 详见章节 25.2“MySQL企业备份概览”。
+      </p><p>
+	    
+        此外, 使用<a class="link" href="glossary.html#glos_cold_backup" title="cold backup">冷备份</a>技术来获取一个一致的InnoDB表的二进制快照：在MySQL
+		服务器执行一个<a class="link" href="glossary.html#glos_slow_shutdown" title="slow shutdown">慢停止</a>操作后复制所有的数据文件。
+      </p><p>
+	    为了创建MyISAM表的原始数据快照，你可以使用标准的复制工具比如
+        <span class="command"><strong>cp</strong></span> 或 <span class="command"><strong>copy</strong></span>, 一个远程的复制工具例如<span class="command"><strong>scp</strong></span> 
+		或<span class="command"><strong>rsync</strong></span>,
+        一个压缩工具例如<span class="command"><strong>zip</strong></span> or
+        <span class="command"><strong>tar</strong></span>, 或一个文件系统快照工具例如
+        <span class="command"><strong>dump</strong></span>, 提供存在在单个文件系统上的MySQL数据文件。如果你只是对特定的数据库进行主从同步，只复制那些和你要同步的表相关的文件。
+        (对于 <code class="literal">InnoDB</code>来讲, 所有的表都存储在
+        <a class="link" href="glossary.html#glos_system_tablespace" title="system tablespace">系统表空间</a>
+        文件中, 除非你启用了
+        <a class="link" href="innodb-parameters.html#sysvar_innodb_file_per_table"><code class="option">innodb_file_per_table</code></a> 选项。)
+      </p><p>
+	    你可以想从你的归档文件中排除下面的文件：
+</p>
+<div class="itemizedlist">
+<ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
+            关于<code class="literal">mysql</code> 数据库的文件.
+          </p></li><li class="listitem"><p>
+            主服务器信息库文件。
+          </p></li><li class="listitem"><p>
+		    主服务器二进制日志文件。
+            The master's binary log files.
+          </p></li><li class="listitem"><p>
+		    任何的中继日志文件。</p></li></ul>
+</div>
+<p>
+        为了获取最一致的原始数据快照文件，要通过下面这个过程来关闭主服务器：
+</p>
+<div class="orderedlist">
+<ol class="orderedlist" type="1"><li class="listitem"><p>
+            获取一个读锁并获取主服务器状态信息。详见章节 17.1.1.4，“获取主从同步中主服务器的二进制日志坐标”。
+          </p></li><li class="listitem"><p>
+		    在另一单独的会话中，关闭主服务器：
+          </p><pre class="programlisting"><div class="docs-select-all" style="display: none;"><div class="copy-help left" style="display: none;">Press CTRL+C to copy</div> <div class="right"><a href="" title="Select All" id="sa25324614"><span class="icon-clipboard"></span></a></div></div>shell&gt; <strong class="userinput"><code>mysqladmin shutdown</code></strong>
+</pre></li><li class="listitem"><p>
+            创建一个MySQL数据文件的副本。下面的例子展示了做这件事的通用方法。你只需要选择其中的一种：
+          </p><pre class="programlisting"><div class="docs-select-all" style="display: block;"><div class="copy-help left" style="display: none;">Press CTRL+C to copy</div> <div class="right"><a href="" title="Select All" id="sa59337999"><span class="icon-clipboard"></span></a></div></div>shell&gt; <strong class="userinput"><code>tar cf <em class="replaceable"><code>/tmp/db.tar</code></em> <em class="replaceable"><code>./data</code></em></code></strong>
+shell&gt; <strong class="userinput"><code>zip -r <em class="replaceable"><code>/tmp/db.zip</code></em> <em class="replaceable"><code>./data</code></em></code></strong>
+shell&gt; <strong class="userinput"><code>rsync --recursive <em class="replaceable"><code>./data</code></em> <em class="replaceable"><code>/tmp/dbdata</code></em></code></strong>
+</pre></li><li class="listitem"><p>
+            Restart the master server.
+</p></li></ol>
+</div>
+<p>
+        如果你没有使用<code class="literal">InnoDB</code> 表, 你可以依据下面的步骤在不关闭主服务器的前提下获取一个快照：
+</p>
+<div class="orderedlist">
+<ol class="orderedlist" type="1"><li class="listitem"><p>
+            获取一个读锁并获取主服务器状态信息。详见章节17.1.1.4，“获取主从同步中主服务器的二进制日志坐标”。
+          </p></li><li class="listitem"><p>
+		    创建一个MySQL数据文件的副本。下面的例子展示了做这件事的通用方法。你只需要选择其中的一种：
+          </p><pre class="programlisting">shell&gt; <strong class="userinput"><code>tar cf <em class="replaceable"><code>/tmp/db.tar</code></em> <em class="replaceable"><code>./data</code></em></code></strong>
+shell&gt; <strong class="userinput"><code>zip -r <em class="replaceable"><code>/tmp/db.zip</code></em> <em class="replaceable"><code>./data</code></em></code></strong>
+shell&gt; <strong class="userinput"><code>rsync --recursive <em class="replaceable"><code>./data</code></em> <em class="replaceable"><code>/tmp/dbdata</code></em></code></strong>
+</pre></li><li class="listitem"><p>
+           在你获得读锁的客户端释放读锁：
+          </p><pre class="programlisting">mysql&gt; <strong class="userinput"><code>UNLOCK TABLES;</code></strong>
+</pre></li></ol>
+</div>
+<p>
+        当你创建好数据库的归档或副本时，在启动从服务器主从同步前将文件复制到每个从服务器上。
+</p>
+</div>
+<br>
+        </div>
+
+                <div id="docs-in-page-nav-container">
+            <div id="docs-in-page-nav">
+                
+    <a href="replication-howto-mysqldump.html" title="Previous: Creating a Data Snapshot Using mysqldump"><span class="icon-chevron-left"></span> PREV</a> &nbsp;
+<a href="index.html" title="Start"> HOME</a> &nbsp;
+        <a href="replication-howto.html" title="Up: How to Set Up Replication"> UP</a> &nbsp;
+    <a href="replication-howto-newservers.html" title="Next: Setting Up Replication with New Master and Slaves">NEXT <span class="icon-chevron-right"></span></a>
+            </div>
+        </div>
+        
+         
+
+                     
+
+              </div>

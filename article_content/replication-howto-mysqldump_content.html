@@ -1,0 +1,77 @@
+<div id="docs-main-inner">
+
+                <div class="right" id="docs-version-nav">
+            <a href="" id="docs-version-nav-toggle">version 5.6
+            <span class="icon-chevron-down"></span></a>
+            <div id="docs-version-list">
+                            </div>
+        </div>
+        
+        <div id="docs-show-nav" class="left hidden" style="margin-right: 15px;">
+            <a class="docs-show-hide-nav" href="" title="Show Sidebar"><span class="icon-arrow-small-right"></span></a>
+        </div>
+
+                        <div id="docs-breadcrumbs">
+            <a href="/doc/refman/5.6/en/">MySQL 5.6 参考手册</a> &nbsp;/&nbsp;
+                            <span id="breadcrumbs-link"><a href="" id="show-breadcrumbs">...</a> &nbsp;/&nbsp;</span>
+                <span class="hidden" id="hidden-breadcrumbs">
+                                                        <a href="replication.html">主从同步</a> &nbsp;/&nbsp;
+                                                            <a href="replication-configuration.html">主从同步配置</a> &nbsp;/&nbsp;
+                                                            <a href="replication-howto.html">如何建立主从同步</a> &nbsp;/&nbsp;
+                                                                                        </span>
+                                        使用mysqldump创建数据快照
+                                    </div>
+        
+        <div id="docs-body">
+        
+<div class="section">
+<div class="titlepage">
+<div>
+<div>
+<h4 class="title"><a name="replication-howto-mysqldump"></a>使用mysqldump创建数据快照</h4>
+
+</div>
+
+</div>
+
+</div>
+<p>
+        在已存在数据的主服务器上建立数据快照的方法之一是使用
+		<a class="link" href="mysqldump.html" title="4.5.4&nbsp;mysqldump — A Database Backup Program"><span class="command"><strong>mysqldump</strong></span></a>
+		工具来新建一个你想要同步的所有数据库的备份。数据备份完成后，在开启主从同步进程前将数据导入到从服务器中。
+      </p><p>
+	    这个例子展示了备份所有数据库到一个名为dbdump.db的文件中，并包含了
+        <a class="link" href="mysqldump.html#option_mysqldump_master-data"><code class="option">--master-data</code></a> 选项以自动的附加从服务器开始主从同步的
+		<a class="link" href="change-master-to.html" title="13.4.2.1&nbsp;CHANGE MASTER TO Syntax"><code class="literal">CHANGE MASTER
+        TO</code></a>语句:
+      </p><pre class="programlisting"><div class="docs-select-all" style="display: none;"><div class="copy-help left" style="display: none;">Press CTRL+C to copy</div> <div class="right"><a href="" title="Select All" id="sa85349446"><span class="icon-clipboard"></span></a></div></div>shell&gt; <strong class="userinput"><code>mysqldump --all-databases --master-data &gt; dbdump.db</code></strong>
+</pre><p>
+        如果你不使用<a class="link" href="mysqldump.html#option_mysqldump_master-data"><code class="option">--master-data</code></a>, 那之后你就需要开启一个单独
+		的会话先手动执行(using <a class="link" href="flush.html" title="13.7.6.3&nbsp;FLUSH Syntax"><code class="literal">FLUSH TABLES WITH READ LOCK</code></a>)
+		后再运行mysqldump，然后第二个会话退出或执行UNLOCK TABLES以释放锁。你必须使用 <a class="link" href="show-master-status.html" title="13.7.5.24&nbsp;SHOW MASTER STATUS Syntax">
+		<code class="literal">SHOW MASTER STATUS</code></a>, 获取匹配当前数据快照的二进制日志位置信息，
+		并在启动从服务器前使用这个信息发布正确的<a class="link" href="change-master-to.html" title="13.4.2.1&nbsp;CHANGE MASTER TO Syntax"><code class="literal">CHANGE MASTER TO</code></a> 语句。
+      </p><p>
+	    当使用一个备份来包含选择的数据库时，注意你需要在每一个从服务器上过滤掉你不想包含在主从同步进程中的数据库。
+      </p><p>
+	    在导入这些数据时，可以将备份直接复制到从服务器或在从服务器上远程的访问主服务器的备份文件。
+</p>
+</div>
+<br>
+        </div>
+
+                <div id="docs-in-page-nav-container">
+            <div id="docs-in-page-nav">
+                
+    <a href="replication-howto-masterstatus.html" title="Previous: Obtaining the Replication Master Binary Log Coordinates"><span class="icon-chevron-left"></span> PREV</a> &nbsp;
+<a href="index.html" title="Start"> HOME</a> &nbsp;
+        <a href="replication-howto.html" title="Up: How to Set Up Replication"> UP</a> &nbsp;
+    <a href="replication-howto-rawdata.html" title="Next: Creating a Data Snapshot Using Raw Data Files">NEXT <span class="icon-chevron-right"></span></a>
+            </div>
+        </div>
+        
+         
+
+                     
+
+              </div>

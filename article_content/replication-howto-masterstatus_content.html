@@ -1,0 +1,116 @@
+<div id="docs-main-inner">
+
+                <div class="right" id="docs-version-nav">
+            <a href="" id="docs-version-nav-toggle">version 5.6
+            <span class="icon-chevron-down"></span></a>
+            <div id="docs-version-list"></div>
+        </div>
+        
+        <div id="docs-show-nav" class="left hidden" style="margin-right: 15px;">
+            <a class="docs-show-hide-nav" href="" title="Show Sidebar"><span class="icon-arrow-small-right"></span></a>
+        </div>
+
+                        <div id="docs-breadcrumbs">
+            <a href="/doc/refman/5.6/en/">MySQL 5.6 参考手册</a> &nbsp;/&nbsp;
+                            <span id="breadcrumbs-link"><a href="" id="show-breadcrumbs">...</a> &nbsp;/&nbsp;</span>
+                <span class="hidden" id="hidden-breadcrumbs">
+                                                        <a href="replication.html">主从同步</a> &nbsp;/&nbsp;
+                                                            <a href="replication-configuration.html">主从同步配置</a> &nbsp;/&nbsp;
+                                                            <a href="replication-howto.html">如何建立主从同步机制</a> &nbsp;/&nbsp;
+                                                                                        </span>
+                                        获取主从同步中主服务器的二进制日志坐标
+                                    </div>
+        
+        <div id="docs-body">
+        
+<div class="section">
+<div class="titlepage">
+<div>
+<div>
+<h4 class="title"><a name="replication-howto-masterstatus"></a>17.1.1.4&nbsp;获取主从同步中主服务器的二进制日志坐标</h4>
+
+</div>
+
+</div>
+
+</div>
+<p>
+		你需要主服务器上二进制日志文件的当前坐标用以配置从服务器从指定的点开始执行主从同步程序。
+        
+      </p><p>
+	    如果你的主服务器上有要在开启主从同步前同步到从服务器上的数据，你必须停止主服务器上的处理语句，然后在主服务器继续执行语句之前获取它当前二进制日志的坐标并
+		复制它的数据。如果你没有在主服务器上停止执行语句，你复制的数据和使用的主服务器状态信息将不匹配，并且在从服务器上将以数据不一致或损坏数据库结束。I
+      </p><p>
+	    按照以下的步骤获取主服务器上二进制日志的坐标：
+</p>
+<div class="orderedlist">
+<ol class="orderedlist" type="1"><li class="listitem"><p>
+        以命令行形式在主服务器上开启一个会话，并通过执行下面的语句刷新所有的表和块写入语句：
+        <a class="link" href="flush.html" title="13.7.6.3&nbsp;FLUSH Syntax"><code class="literal">FLUSH TABLES WITH
+            READ LOCK</code></a> statement:
+        </p><pre class="programlisting"><div class="docs-select-all" style="display: none;"><div class="copy-help left" style="display: none;">Press CTRL+C to copy</div> <div class="right"><a href="" title="Select All" id="sa29648066"><span class="icon-clipboard"></span></a></div></div>mysql&gt; <strong class="userinput"><code>FLUSH TABLES WITH READ LOCK;</code></strong>
+</pre><p>
+            对于 <code class="literal">InnoDB</code> 的表,
+            <a class="link" href="flush.html" title="13.7.6.3&nbsp;FLUSH Syntax"><code class="literal">FLUSH TABLES WITH
+            READ LOCK</code></a> 同样阻塞
+            <a class="link" href="commit.html" title="13.3.1&nbsp;START TRANSACTION, COMMIT, and ROLLBACK Syntax"><code class="literal">COMMIT</code></a> 操作。
+</p>
+<div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;">
+
+<div class="admon-title">
+警告：
+</div>
+<p>
+            离开你发布
+              
+              <a class="link" href="flush.html" title="13.7.6.3&nbsp;FLUSH Syntax"><code class="literal">FLUSH
+              TABLES</code></a> 语句以保持锁生效的客户端将导致读锁释放。
+</p>
+</div>
+</li><li class="listitem"><p>
+            在主服务器的另一个不同的会话中，使用
+            <a class="link" href="show-master-status.html" title="13.7.5.24&nbsp;SHOW MASTER STATUS Syntax"><code class="literal">SHOW MASTER STATUS</code></a> 语句
+            来确定当前二进制日志文件的名称和位置。
+          </p><pre class="programlisting"><div class="docs-select-all" style="display: none;"><div class="copy-help left" style="display: none;">Press CTRL+C to copy</div> <div class="right"><a href="" title="Select All" id="sa69382752"><span class="icon-clipboard"></span></a></div></div>mysql &gt; <strong class="userinput"><code>SHOW MASTER STATUS;</code></strong>
++------------------+----------+--------------+------------------+
+| File             | Position | Binlog_Do_DB | Binlog_Ignore_DB |
++------------------+----------+--------------+------------------+
+| mysql-bin.000003 | 73       | test         | manual,mysql     |
++------------------+----------+--------------+------------------+
+</pre><p>
+            <code class="literal">File</code> 列显示二进制日志文件的名称， <code class="literal">Position</code> 列显示文件中的位置. 在这个示例中，二进制日志文件
+			是<code class="literal">mysql-bin.000003</code> 且位置是 73。记录这些值，你将在后续的从服务器配置时使用到这些值。它们指出了从服务器在进行主从同步时
+			应该从什么地方开始执行主服务器的更新操作。
+          </p><p>
+		    如果主服务器在之前运行时没有开启二进制日志，使用<a class="link" href="show-master-status.html" title="13.7.5.24&nbsp;SHOW MASTER STATUS Syntax"><code class="literal">SHOW MASTER
+            STATUS</code></a> 或 <a class="link" href="mysqldump.html" title="4.5.4&nbsp;mysqldump — A Database Backup Program"><span class="command"><strong>mysqldump
+            --master-data</strong></span></a> 语句显示出来的日志名称和位置都将为空。在这种情况下，你在后续中使用到的用来给从服务器指定日志文件和位置的值应该取''和4。
+</p></li></ol>
+</div>
+<p>
+        现在你已经有了用来开启从服务器主从同步的信息，这些信息给出了从服务器应该从日志的哪个地方开始读取。
+      </p><p>
+	    如果有在开启主从同步前需要同步到从服务器的数据，留下当前的客户端会话用以保持当前的锁定状态然后进入章节17.1.1.5,“使用mysqldump创建数据快照”，或章节17.1.1.6，“使用原始数据文件创建数据快照”。
+		这里的想法是阻止主服务器上发生任何的后续的变更用以保证复制到从服务器上的数据和主服务器是同步的。
+      </p><p>
+	    如果你在设置一个全新的主服务器和从服务器组，你可以释放掉第一个会话以解除读锁。
+</p>
+</div>
+<br>
+        </div>
+
+                <div id="docs-in-page-nav-container">
+            <div id="docs-in-page-nav">
+                
+    <a href="replication-howto-repuser.html" title="Previous: Creating a User for Replication"><span class="icon-chevron-left"></span> PREV</a> &nbsp;
+<a href="index.html" title="Start"> HOME</a> &nbsp;
+        <a href="replication-howto.html" title="Up: How to Set Up Replication"> UP</a> &nbsp;
+    <a href="replication-howto-mysqldump.html" title="Next: Creating a Data Snapshot Using mysqldump">NEXT <span class="icon-chevron-right"></span></a>
+            </div>
+        </div>
+        
+         
+
+                     
+
+              </div>
