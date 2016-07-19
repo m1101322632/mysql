@@ -1,0 +1,79 @@
+<div id="docs-main-inner">
+
+                <div class="right" id="docs-version-nav">
+            <a href="" id="docs-version-nav-toggle">version 5.6
+            <span class="icon-chevron-down"></span></a>
+            <div id="docs-version-list"></div>
+        </div>
+        
+        <div id="docs-show-nav" class="left hidden" style="margin-right: 15px;">
+            <a class="docs-show-hide-nav" href="" title="Show Sidebar"><span class="icon-arrow-small-right"></span></a>
+        </div>
+
+                        <div id="docs-breadcrumbs">
+            <a href="/doc/refman/5.6/en/">MySQL 5.6 参考手册</a> &nbsp;/&nbsp;
+                            <span id="breadcrumbs-link"><a href="" id="show-breadcrumbs">...</a> &nbsp;/&nbsp;</span>
+                <span class="hidden" id="hidden-breadcrumbs">
+                                                        <a href="replication.html">主从同步</a> &nbsp;/&nbsp;
+                                                            <a href="replication-configuration.html">主从同步配置</a> &nbsp;/&nbsp;
+                                                            <a href="replication-howto.html">如何建立主从同步</a> &nbsp;/&nbsp;
+                                                                                        </span>
+                                        在从服务器上设置主服务器相关配置信息
+                                    </div>
+        
+        <div id="docs-body">
+        
+<div class="section">
+<div class="titlepage">
+<div>
+<div>
+<h4 class="title"><a name="replication-howto-slaveinit"></a>17.1.1.10&nbsp;在从服务器上设置主服务器相关配置信息</h4>
+
+</div>
+
+</div>
+
+</div>
+<p>
+		为了建立从服务器到主服务器主从同步通信，你必须告诉从服务器必须的连接信息。在从服务器上执行下面的语句来做到这点，
+		用你的系统中的真实的值来替换选项中的值：
+      </p><pre class="programlisting"><div class="docs-select-all" style="display: none;"><div class="copy-help left" style="display: none;">Press CTRL+C to copy</div> <div class="right"><a href="" title="Select All" id="sa70978768"><span class="icon-clipboard"></span></a></div></div>mysql&gt; <strong class="userinput"><code>CHANGE MASTER TO</code></strong>
+    -&gt;     <strong class="userinput"><code>MASTER_HOST='<em class="replaceable"><code>master_host_name</code></em>',</code></strong>
+    -&gt;     <strong class="userinput"><code>MASTER_USER='<em class="replaceable"><code>replication_user_name</code></em>',</code></strong>
+    -&gt;     <strong class="userinput"><code>MASTER_PASSWORD='<em class="replaceable"><code>replication_password</code></em>',</code></strong>
+    -&gt;     <strong class="userinput"><code>MASTER_LOG_FILE='<em class="replaceable"><code>recorded_log_file_name</code></em>',</code></strong>
+    -&gt;     <strong class="userinput"><code>MASTER_LOG_POS=<em class="replaceable"><code>recorded_log_position</code></em>;</code></strong>
+</pre>
+<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
+
+<div class="admon-title">
+注意：
+</div>
+<p>
+		  主从同步不可以使用Unix 套接字文件。你必须可以通过TCP/IP协议来连接到你的主服务器。
+</p>
+</div>
+<p>
+        <a class="link" href="change-master-to.html" title="13.4.2.1&nbsp;CHANGE MASTER TO Syntax"><code class="literal">CHANGE MASTER TO</code></a> 语句也有其他的选择的。
+		例如，使用SSL来建立安全主从同步是可行的。对于完整的选项列表，和允许的字符串值选项的最大长度可以参见章节 13.4.2.1 “CHANGE MASTER TO Syntax”。
+</p>
+</div>
+
+<br>
+        </div>
+
+                <div id="docs-in-page-nav-container">
+            <div id="docs-in-page-nav">
+                
+    <a href="replication-howto-additionalslaves.html" title="Previous: Introducing Additional Slaves to an Existing Replication Environment"><span class="icon-chevron-left"></span> PREV</a> &nbsp;
+<a href="index.html" title="Start"> HOME</a> &nbsp;
+        <a href="replication-howto.html" title="Up: How to Set Up Replication"> UP</a> &nbsp;
+    <a href="replication-formats.html" title="Next: Replication Formats">NEXT <span class="icon-chevron-right"></span></a>
+            </div>
+        </div>
+        
+         
+
+                     
+
+              </div>

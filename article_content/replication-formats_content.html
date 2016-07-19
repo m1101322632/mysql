@@ -1,0 +1,128 @@
+<div id="docs-main-inner">
+
+                <div class="right" id="docs-version-nav">
+            <a href="" id="docs-version-nav-toggle">version 5.6
+            <span class="icon-chevron-down"></span></a>
+            <div id="docs-version-list">
+
+                            </div>
+        </div>
+        
+        <div id="docs-show-nav" class="left hidden" style="margin-right: 15px;">
+            <a class="docs-show-hide-nav" href="" title="Show Sidebar"><span class="icon-arrow-small-right"></span></a>
+        </div>
+
+                        <div id="docs-breadcrumbs">
+            <a href="/doc/refman/5.6/en/">MySQL 5.6 参考手册</a> &nbsp;/&nbsp;
+                            <span id="breadcrumbs-link"><a href="" id="show-breadcrumbs">...</a> &nbsp;/&nbsp;</span>
+                <span class="hidden" id="hidden-breadcrumbs">
+                                                        <a href="replication.html">主从同步</a> &nbsp;/&nbsp;
+                                                            <a href="replication-configuration.html">主从同步配置</a> &nbsp;/&nbsp;
+                                                                                        </span>
+                                        主从同步格式
+                                    </div>
+        
+        <div id="docs-body">
+        
+<div class="section">
+<div class="titlepage">
+<div>
+<div>
+<h3 class="title"><a name="replication-formats"></a>17.1.2&nbsp;主从同步格式</h3>
+
+</div>
+
+</div>
+
+</div>
+<div class="toc">
+<p><small>[<a href="#" class="tocdetail" onclick="toggle('tocdetail-0'); return false;" onkeypress="if (event.keyCode == 13) { toggle('tocdetail-0'); return false;}">+/-</a>]</small></p>
+<dl id="tocdetail-0"><dt><span class="section"><a href="replication-sbr-rbr.html">17.1.2.1 基于语句和基于行的主从同步的优点和缺点
+Replication</a></span></dt><dt><span class="section"><a href="replication-rbr-usage.html">17.1.2.2 基于行行的日志和主从同步的用法</a></span></dt>
+<dt><span class="section"><a href="replication-rbr-safe-unsafe.html">17.1.2.3 确定二进制日志中安全和不安全的语句</a></span></dt></dl>
+</div>
+<p>
+      主从同步能正常工作是因为被写入到日志里的事件被从服务器从主服务器上读取并在从服务器上进行了处理。事件被依据自己的类型以不同的格式记录到二进制日志中。
+       不同的主从同步格式与主服务器记录事件时所使用的二进制日志格式相对应。二进制日志格式和主从同步中使用的术语的对应关系如下：
+      binary logging formats and the terms used during replication are:
+</p>
+<div class="itemizedlist">
+<ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
+          当使用基于语句的二进制日志，主服务器将SQL语句写入到二进制日志中。从主服务器到从服务器的同步以在从服务器上执行SQL语句的方式来工作。这个叫做
+		  <span class="firstterm">基于语句的主从同步</span> (经常被缩写为<span class="firstterm">SBR</span>), 对应于MySql标准的基于语句的二进制日志格式。
+		  在MySql 5.1.4版及之前主从同步功能只能使用这种格式。
+        </p></li><li class="listitem"><p>
+		  当使用基于行的二进制日志时，主服务器写事件到二进制日志中来表明表单独的表的行数据是如何变化的。主从服务器之间的同步以在从服务器上对相应的表的数据
+		  做同样的改变的方式来工作。这就叫做基于行的主从同步。(经常被缩写为
+          <span class="firstterm">RBR</span>). 在基于行的主从同步机制中，主服务器将表明单独表是行如何改变的事件写入到二进制日志文件中。
+        </p></li><li class="listitem"><p>
+		  你可以配置MySQL使用基于语句和基于行的日志的混合方式，事件将依据哪种方式能最准确讲改变记录到日志中来选择记录的方式。这个叫做
+          <span class="firstterm">符合格式记录</span>.
+		  当使用符合格式记录时，默认使用基于语句的日志。依赖于具体的语句和使用的存储引擎，日志会被在特殊场景下自动的切换到基于行的日志。使用混合格式的主从同步
+          常常被称为<span class="firstterm">混合模式复制</span>
+          或 <span class="firstterm">混合格式复制</span>. 为了获取更多的信息，请参考
+          <a class="xref" href="binary-log-mixed.html" title="5.4.4.3&nbsp;Mixed Binary Logging Format">章节&nbsp;5.4.4.3, “混合二进制日志格式”</a>.
+</p></li></ul>
+</div>
+<p>
+      在MySQL 5.6中, 默认使用基于语句格式的二进制日志。
+    </p><p><b>MySQL 集群.&nbsp;</b>
+        在MySQL集群NDB 7.3和7.4的所有发布版本中默认的二进制日志格式都是<code class="literal">混合模式</code>.
+		你需要注意MySQL集群同步经常使用基于语句的主从同步，且
+        <a class="link" href="mysql-cluster.html" title="Chapter&nbsp;18&nbsp;MySQL Cluster NDB 7.3 and MySQL Cluster NDB 7.4"><code class="literal">NDB</code></a>存储引擎
+		与基于语句的中从同步不兼容。 详见
+        <a class="xref" href="mysql-cluster-replication-general.html" title="18.6.2&nbsp;General Requirements for MySQL Cluster Replication">章节&nbsp;18.6.2, “MySQL集群同
+		步的常规要求”</a>, 来了解更多内容。
+      </p><p>
+      当使用 <code class="literal">混合模式</code> 格式时， 二进制日志格式在某种程度上决定于使用的存储引擎和所执行的语句。更多的关于混合复制日志和不同日志格式的支持规则可以参考
+      <a class="xref" href="binary-log-mixed.html" title="5.4.4.3&nbsp;Mixed Binary Logging Format">章节&nbsp;5.4.4.3, “混合二进制日志格式”</a>.
+    </p><p>
+      The logging format in a running MySQL server is controlled by
+      setting the <a class="link" href="replication-options-binary-log.html#sysvar_binlog_format"><code class="literal">binlog_format</code></a> server
+      system variable. This variable can be set with session or global
+      scope. The rules governing when and how the new setting takes
+      effect are the same as for other MySQL server system
+      variables—setting the variable for the current session lasts
+      only until the end of that session, and the change is not visible
+      to other sessions; setting the variable globally requires a
+      restart of the server to take effect. For more information, see
+      <a class="xref" href="set-statement.html" title="13.7.4&nbsp;SET Syntax">Section&nbsp;13.7.4, “SET Syntax”</a>.
+    </p><p>
+      There are conditions under which you cannot change the binary
+      logging format at runtime or doing so causes replication to fail.
+      See <a class="xref" href="binary-log-setting.html" title="5.4.4.2&nbsp;Setting The Binary Log Format">Section&nbsp;5.4.4.2, “Setting The Binary Log Format”</a>.
+    </p><p>
+      You must have the <a class="link" href="privileges-provided.html#priv_super"><code class="literal">SUPER</code></a> privilege
+      to set either the global or session
+      <a class="link" href="replication-options-binary-log.html#sysvar_binlog_format"><code class="literal">binlog_format</code></a> value.
+    </p><p>
+      The statement-based and row-based replication formats have
+      different issues and limitations. For a comparison of their
+      relative advantages and disadvantages, see
+      <a class="xref" href="replication-sbr-rbr.html" title="17.1.2.1&nbsp;Advantages and Disadvantages of Statement-Based and Row-Based Replication">Section&nbsp;17.1.2.1, “Advantages and Disadvantages of Statement-Based and Row-Based
+        Replication”</a>.
+    </p><p>
+      With statement-based replication, you may encounter issues with
+      replicating stored routines or triggers. You can avoid these
+      issues by using row-based replication instead. For more
+      information, see <a class="xref" href="stored-programs-logging.html" title="20.7&nbsp;Binary Logging of Stored Programs">Section&nbsp;20.7, “Binary Logging of Stored Programs”</a>.
+</p>
+</div><br>
+        </div>
+
+                <div id="docs-in-page-nav-container">
+            <div id="docs-in-page-nav">
+                
+    <a href="replication-howto-slaveinit.html" title="Previous: Setting the Master Configuration on the Slave"><span class="icon-chevron-left"></span> PREV</a> &nbsp;
+<a href="index.html" title="Start"> HOME</a> &nbsp;
+        <a href="replication-configuration.html" title="Up: Replication Configuration"> UP</a> &nbsp;
+    <a href="replication-sbr-rbr.html" title="Next: Advantages and Disadvantages of Statement-Based and Row-Based
+Replication">NEXT <span class="icon-chevron-right"></span></a>
+            </div>
+        </div>
+        
+         
+
+                     
+
+              </div>

@@ -1,0 +1,112 @@
+<div id="docs-main-inner">
+
+                <div class="right" id="docs-version-nav">
+            <a href="" id="docs-version-nav-toggle">version 5.6
+            <span class="icon-chevron-down"></span></a>
+            <div id="docs-version-list"></div>
+        </div>
+        
+        <div id="docs-show-nav" class="left hidden" style="margin-right: 15px;">
+            <a class="docs-show-hide-nav" href="" title="Show Sidebar"><span class="icon-arrow-small-right"></span></a>
+        </div>
+
+                        <div id="docs-breadcrumbs">
+            <a href="/doc/refman/5.6/en/">MySQL 5.6 参考手册</a> &nbsp;/&nbsp;
+                            <span id="breadcrumbs-link"><a href="" id="show-breadcrumbs">...</a> &nbsp;/&nbsp;</span>
+                <span class="hidden" id="hidden-breadcrumbs">
+                                                        <a href="replication.html">主从同步</a> &nbsp;/&nbsp;
+                                                            <a href="replication-configuration.html">主从同步配置</a> &nbsp;/&nbsp;
+                                                            <a href="replication-howto.html">如何建立主从同步</a> &nbsp;/&nbsp;
+                                                                                        </span>
+                                        给现存的主从同步环境引入额外的从服务器
+                                    </div>
+        
+        <div id="docs-body">
+        
+<div class="section">
+<div class="titlepage">
+<div>
+<div>
+<h4 class="title"><a name="replication-howto-additionalslaves"></a>17.1.1.9&nbsp;给现存的主从同步环境引入额外的从服务器</h4>
+
+</div>
+
+</div>
+
+</div>
+<p>
+        为了在已存在的主从同步配置中添加额外的从服务器, 你可以在不停止主服务器的前提下做到这点。此外，直接复制现有的从服务器
+        来建立一个新的从服务器，唯一要改的是新增的从服务器的server-id的值。
+      </p><p>
+	    复制一个已经存在的服务器：
+</p>
+<div class="orderedlist">
+<ol class="orderedlist" type="1"><li class="listitem"><p>
+            关闭现在的这台从服务器：
+            Shut down the existing slave:
+          </p><pre class="programlisting">shell&gt; <strong class="userinput"><code>mysqladmin shutdown</code></strong>
+</pre></li><li class="listitem"><p>
+            从现存的从服务器中复制数据文件目录到新的从服务器中。你可以通过tar或WinZip建立一个归档文件或使用cp或rsync执行一个目录
+			拷贝来做到这点。确保你将日志文件和中继日志文件也复制了。
+          </p><p>
+		    在添加一个新的从服务器时通常会遭遇到的问题是新的从服务器以下面这一系列的警告和错误信息而失败：
+          </p><pre class="programlisting"><div class="docs-select-all" style="display: none;"><div class="copy-help left" style="display: none;">Press CTRL+C to copy</div> <div class="right"><a href="" title="Select All" id="sa47761227"><span class="icon-clipboard"></span></a></div></div>071118 16:44:10 [Warning] Neither --relay-log nor --relay-log-index were used; so
+replication may break when this MySQL server acts as a slave and has his hostname
+changed!! Please use '--relay-log=<em class="replaceable"><code>new_slave_hostname</code></em>-relay-bin' to avoid this problem.
+<span class="errortext">071118 16:44:10 [ERROR] Failed to open the relay log './<em class="replaceable"><code>old_slave_hostname</code></em>-relay-bin.003525'
+(relay_log_pos 22940879)</span>
+071118 16:44:10 <span class="errortext">[ERROR] Could not find target log during relay log initialization</span>
+071118 16:44:10 <span class="errortext">[ERROR] Failed to initialize the master info structure</span>
+</pre><p>
+            这个规则于如果没有指定<code class="option">--relay-log</code>选项，则中继日志文件将主机名称作为他们文件名的一部分(这个问题同样适用
+			于在<code class="option">--relay-log-index</code>选项没使用时的中继日志索引文件)。详见章节 17.1.4 “主从同步和二进制日志选项和变量”。
+          </p><p>
+		    为了避免出现这个问题，在新的从服务器上使用和已存在的从服务器一样的<code class="option">--relay-log</code>选项。 (如果这个选项在现存
+			的从服务器上不存在，则使用<code class="literal"><em class="replaceable"><code>existing_slave_hostname</code></em>-relay-bin</code>.)
+			
+			如果这样做不可行，复制已存在的从服务器中继日志索引文件到新的从服务器上并在其上设定<code class="option">--relay-log-index</code>选项
+			用以匹配以存在的从服务器上的中继索引文件。(如果这个选项在现存的从服务器上没有明确设定，使用<em class="replaceable"><code>existing_slave_hostname</code></em>-relay-bin.index</code>)。
+			
+			另外如果你已经尝试启动新的从服务器且遇到了类似上面描述的那些问题。那么请执行下面的步骤：
+</p>
+<div class="orderedlist">
+<ol class="orderedlist" type="a"><li class="listitem"><p>
+                在新的从服务器器上执行<code class="literal">STOP SLAVE</code>命令。
+              </p><p>
+			    如果你早已再次启动现存的从服务器，同样在现存的从服务器上发布<code class="literal">STOP SLAVE</code>命令。
+              </p></li><li class="listitem"><p>
+			    复制现存的从服务器上的中继日志索引文件到新的从服务器中继日志文件中，确保覆盖文件中的任何已有内容。
+              </p></li><li class="listitem"><p>
+			    在这部分处理剩下的步骤。
+</p></li></ol>
+</div>
+</li><li class="listitem"><p>
+            从已存在的从服务器中复制主服务器信息和中继日志信息库(详见章节 17.2.2，“主从同步中继和状态日志”)到新的从服务器上。这些信息中维护着主服务器二进制日志当前坐标和从服务器中继日志。
+          </p></li><li class="listitem"><p>
+		    启动现存的从服务器。
+          </p></li><li class="listitem"><p>
+            在新的从服务器上，编辑配置信息并给定一个新的唯一的<code class="option">server-id</code>。
+          </p></li><li class="listitem"><p>
+		    启动新的从服务器。从服务器使用它的主服务器信息库来开始主从同步进程。
+</p></li></ol>
+</div>
+
+</div>
+<br>
+        </div>
+
+                <div id="docs-in-page-nav-container">
+            <div id="docs-in-page-nav">
+                
+    <a href="replication-howto-existingdata.html" title="Previous: Setting Up Replication with Existing Data"><span class="icon-chevron-left"></span> PREV</a> &nbsp;
+<a href="index.html" title="Start"> HOME</a> &nbsp;
+        <a href="replication-howto.html" title="Up: How to Set Up Replication"> UP</a> &nbsp;
+    <a href="replication-howto-slaveinit.html" title="Next: Setting the Master Configuration on the Slave">NEXT <span class="icon-chevron-right"></span></a>
+            </div>
+        </div>
+        
+         
+
+                     
+
+              </div>

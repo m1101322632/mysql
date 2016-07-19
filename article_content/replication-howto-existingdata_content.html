@@ -1,0 +1,141 @@
+<div id="docs-main-inner">
+
+                <div class="right" id="docs-version-nav">
+            <a href="" id="docs-version-nav-toggle">version 5.6
+            <span class="icon-chevron-down"></span></a>
+            <div id="docs-version-list"></div>
+        </div>
+        
+        <div id="docs-show-nav" class="left hidden" style="margin-right: 15px;">
+            <a class="docs-show-hide-nav" href="" title="Show Sidebar"><span class="icon-arrow-small-right"></span></a>
+        </div>
+
+                        <div id="docs-breadcrumbs">
+            <a href="/doc/refman/5.6/en/">MySQL 5.6 参考手册</a> &nbsp;/&nbsp;
+                            <span id="breadcrumbs-link"><a href="" id="show-breadcrumbs">...</a> &nbsp;/&nbsp;</span>
+                <span class="hidden" id="hidden-breadcrumbs">
+                                                        <a href="replication.html">主从同步</a> &nbsp;/&nbsp;
+                                                            <a href="replication-configuration.html">主从同步配置</a> &nbsp;/&nbsp;
+                                                            <a href="replication-howto.html">如何建立主从同步</a> &nbsp;/&nbsp;
+                                                                                        </span>
+                                        在有数据的前提下建立主从同步
+                                    </div>
+        
+        <div id="docs-body">
+        
+<div class="section">
+<div class="titlepage">
+<div>
+<div>
+<h4 class="title"><a name="replication-howto-existingdata"></a>17.1.1.8&nbsp;在有数据的前提下建立主从同步</h4>
+
+</div>
+
+</div>
+
+</div>
+<p>
+        当在有数据的前提下设置主从同步时，你应该考虑如何在开始主从同步之前更好的让从服务器从主服务器获取到该数据。
+      </p><p>
+	    在有数据的前提下建立主从同步机制的基础步骤如下：
+</p>
+<div class="orderedlist">
+<ol class="orderedlist" type="1"><li class="listitem"><p>
+            在主服务器运行期间，创建一个用于从服务器连接到主服务器进行主从同步的用户。详见章节 17.1.1.3，“为主从同步创建单独的用户”。
+          </p></li><li class="listitem"><p>
+		    如果你还没有在主服务器上配置<a class="link" href="replication-options.html#option_mysqld_server-id"><code class="option">server-id</code></a> 和开启了二进制日志，你
+			将需要关闭服务器来配置这些选项。详见章节 17.1.1.1，“设置主从同步中主服务器的配置”
+          </p><p>
+		    如果你必须关闭你的主服务器，这是一个好的机会来获取一个主服务器数据库的快照。你需要在关机前获取主服务器状态信息(详见章节 17.1.1.4，“获取主从同步中主服务器的二进制日志坐标”) ,
+			更新配置信息并获取一个快照。关于如何从源数据文件获取一个快照，详见章节17.1.1.6，“使用源数据文件创建数据快照”。
+          </p></li><li class="listitem"><p>
+		    如果你的主服务器早已经正确的配置，获取它的状态（详见章节 17.1.1.4，“获取主从同步中主服务器的二进制日志坐标”），然后使用mysqldump获取一个快照或使用源数据文件创建一个快照。
+          </p></li><li class="listitem"><p>
+		    更新从服务器的配置。详见章节17.1.1.2 “设置主从同步从服务器配置”。
+          </p></li><li class="listitem"><p>
+		    下一步依赖于你如何在主服务器上创建的快照。
+          </p><p>
+            如果你使用mysqldump:
+</p>
+<div class="orderedlist">
+<ol class="orderedlist" type="a"><li class="listitem"><p>
+                启动从服务器，使用<code class="option">--skip-slave-start</code>选项以保证主从同步没有开始。
+              </p></li><li class="listitem"><p>
+                导入备份文件：
+              </p><pre class="programlisting"><div class="docs-select-all" style="display: none;"><div class="copy-help left" style="display: none;">Press CTRL+C to copy</div> <div class="right"><a href="" title="Select All" id="sa63954509"><span class="icon-clipboard"></span></a></div></div>shell&gt; <strong class="userinput"><code>mysql &lt; fulldb.dump</code></strong>
+</pre></li></ol>
+</div>
+<p>
+			如果你使用源数据文件创建的数据快照：
+</p>
+<div class="orderedlist">
+<ol class="orderedlist" type="a"><li class="listitem"><p>
+                抽取数据文件放置到你从数据的数据目录。
+				例如：
+              </p><pre class="programlisting">shell&gt; <strong class="userinput"><code>tar xvf dbdump.tar</code></strong>
+</pre><p>
+                你可能需要设定备份文件的权限和所有者以使从服务器可以访问和修改它。
+              </p></li><li class="listitem"><p>
+                启动从服务器，使用<code class="option">--skip-slave-start</code>选项以保证主从同步没有开始。
+              
+</p></li></ol>
+</div>
+</li><li class="listitem"><p>
+			使用主服务器上主从同步坐标对从服务器进行配置。这将告诉从服务器二进制日志文件名称和位置以及该从文件的哪个点开始。
+			同时，使用登录认证信息和主服务器的主机名对从服务器进行配置。可以从章节17.1.1.10，“在从服务器上设置主服务器配置” 获取更多信息。
+          </p></li><li class="listitem"><p>
+            启动从服务器同步线程:
+          </p><pre class="programlisting">mysql&gt; <strong class="userinput"><code>START SLAVE;</code></strong>
+</pre></li></ol>
+</div>
+<p>
+        在你执行这些步骤之后，从服务器应该可以连接到主服务器并捕获到快照之后的主服务器的任何更新操作。
+      </p><p>
+	    如果你忘了设置主服务器的
+        <a class="link" href="replication-options.html#option_mysqld_server-id"><code class="option">server-id</code></a> 选项,从服务器将无法连接到它。
+        
+      </p><p>
+	    如果你忘了设置从服务器的
+        <a class="link" href="replication-options.html#option_mysqld_server-id"><code class="option">server-id</code></a> 选项,
+        你将在从服务器的错误日志上得到下面信息：
+      </p><pre class="programlisting">警告: 你应该在master_host已经设定的前提下将server-id设置为非0值；我们将会强制将它设置为2，但是MySQL 服务器将不会扮演从服务器角色。
+</pre><p>
+        你同样可以在因其他原因导致不能进行主从同步时在从服务器错误日志中找到错误信息。
+      </p><p>
+	    从服务器使用存储在它的主服务器信息库中的信息来追踪主服务器二进制日志中有多少已经处理了。这个库可以是文件格式也可以是表，决定于选项
+		<code class="option">--master-info-repository</code>的值。当从服务器加 <code class="option">--master-info-repository=FILE</code>参数执行时，
+        你可以在数据文件目录中找到两个文件即master.info和relay-log.info.如果使用<code class="option">--master-info-repository=TABLE</code> 参数替代, 这个信息将存储在表
+		mysql库的master_slave_info表中。在任何一种场合，都不要删除或修改这些文件或表除非你非常明确你在做什么并完全明白它带来的影。即使在那样的场合，你使用<code class="literal">CHANGE MASTER TO</code>
+        语句来改变主从同步参数会更好。从服务器可以使用语句中指定的值来自动更新状态文件。详见章节 17.2.2，“主从同步转播和状态日志”。
+</p>
+<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
+
+<div class="admon-title">
+注意：
+</div>
+<p>
+          主服务器信息库的内容重写了命令行或my.cnf指定的一些服务器选项。详见章节17.1.4，“主从同步和二进制日志选项和变量”
+</p>
+</div>
+<p>
+        一个单独的主服务器快照足够所有从服务器使用。建立额外的从服务器时，使用同样的主服务器数据快照并按描述的从服务器配置步骤进行配置。
+</p>
+</div>
+<br>
+        </div>
+
+                <div id="docs-in-page-nav-container">
+            <div id="docs-in-page-nav">
+                
+    <a href="replication-howto-newservers.html" title="Previous: Setting Up Replication with New Master and Slaves"><span class="icon-chevron-left"></span> PREV</a> &nbsp;
+<a href="index.html" title="Start"> HOME</a> &nbsp;
+        <a href="replication-howto.html" title="Up: How to Set Up Replication"> UP</a> &nbsp;
+    <a href="replication-howto-additionalslaves.html" title="Next: Introducing Additional Slaves to an Existing Replication Environment">NEXT <span class="icon-chevron-right"></span></a>
+            </div>
+        </div>
+        
+         
+
+                     
+
+              </div>
