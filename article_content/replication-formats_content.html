@@ -77,35 +77,19 @@ Replication</a></span></dt><dt><span class="section"><a href="replication-rbr-us
       当使用 <code class="literal">混合模式</code> 格式时， 二进制日志格式在某种程度上决定于使用的存储引擎和所执行的语句。更多的关于混合复制日志和不同日志格式的支持规则可以参考
       <a class="xref" href="binary-log-mixed.html" title="5.4.4.3&nbsp;Mixed Binary Logging Format">章节&nbsp;5.4.4.3, “混合二进制日志格式”</a>.
     </p><p>
-      The logging format in a running MySQL server is controlled by
-      setting the <a class="link" href="replication-options-binary-log.html#sysvar_binlog_format"><code class="literal">binlog_format</code></a> server
-      system variable. This variable can be set with session or global
-      scope. The rules governing when and how the new setting takes
-      effect are the same as for other MySQL server system
-      variables—setting the variable for the current session lasts
-      only until the end of that session, and the change is not visible
-      to other sessions; setting the variable globally requires a
-      restart of the server to take effect. For more information, see
-      <a class="xref" href="set-statement.html" title="13.7.4&nbsp;SET Syntax">Section&nbsp;13.7.4, “SET Syntax”</a>.
+	  在运行中的MySQL服务器上日志格式通过设定<code class="literal">binlog_format</code>服务器系统变量来控制. 这个变量可以只设置当前会话作用域中的值也可以设定全局作用域中的值。 
+	  新配置项生效的控制规则和MySQL其他的系统变量规则一致，给当前会话设定的变量在当前会话结束前一直有效；在全局设定的配置项要重新启动服务器才可以生效。请参考
+      <a class="xref" href="set-statement.html" title="13.7.4&nbsp;SET Syntax">章节&nbsp;13.7.4, “SET 语法”</a>获取更多信息。
     </p><p>
-      There are conditions under which you cannot change the binary
-      logging format at runtime or doing so causes replication to fail.
-      See <a class="xref" href="binary-log-setting.html" title="5.4.4.2&nbsp;Setting The Binary Log Format">Section&nbsp;5.4.4.2, “Setting The Binary Log Format”</a>.
+	  下面是一些你不可以在服务器运行时更改日志格式的场景，此时更改会导致主从同步失败。
+      详见 <a class="xref" href="binary-log-setting.html" title="5.4.4.2&nbsp;Setting The Binary Log Format">章节&nbsp;5.4.4.2, “设定二进制日志格式”</a>.
     </p><p>
-      You must have the <a class="link" href="privileges-provided.html#priv_super"><code class="literal">SUPER</code></a> privilege
-      to set either the global or session
-      <a class="link" href="replication-options-binary-log.html#sysvar_binlog_format"><code class="literal">binlog_format</code></a> value.
+      你必须有 <a class="link" href="privileges-provided.html#priv_super"><code class="literal">超级</code></a> 权限来设置全局或当前会话中的<code class="literal">binlog_format</code>值。
     </p><p>
-      The statement-based and row-based replication formats have
-      different issues and limitations. For a comparison of their
-      relative advantages and disadvantages, see
-      <a class="xref" href="replication-sbr-rbr.html" title="17.1.2.1&nbsp;Advantages and Disadvantages of Statement-Based and Row-Based Replication">Section&nbsp;17.1.2.1, “Advantages and Disadvantages of Statement-Based and Row-Based
-        Replication”</a>.
+	  基于语句的日志和基于行的日志有不同的问题和各自的限制。 请参考章节 17.1.2.1 “基于语句和基于行的主从同步的优缺点”来获取关于它们两个优缺点的对照。
     </p><p>
-      With statement-based replication, you may encounter issues with
-      replicating stored routines or triggers. You can avoid these
-      issues by using row-based replication instead. For more
-      information, see <a class="xref" href="stored-programs-logging.html" title="20.7&nbsp;Binary Logging of Stored Programs">Section&nbsp;20.7, “Binary Logging of Stored Programs”</a>.
+	  使用基于语句的主从同步，你可能会遭遇到存储过程或触发器相关的问题。你可以通过基于行的主从同步来避过这个问题。请参见
+	  <a class="xref" href="stored-programs-logging.html" title="20.7&nbsp;Binary Logging of Stored Programs">章节&nbsp;20.7, “存储程序的二进制日志”</a>.
 </p>
 </div><br>
         </div>
