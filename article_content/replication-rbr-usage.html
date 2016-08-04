@@ -1,0 +1,187 @@
+<div id="docs-main-inner">
+
+                <div class="right" id="docs-version-nav">
+            <a href="" id="docs-version-nav-toggle">version 5.6
+            <span class="icon-chevron-down"></span></a>
+            <div id="docs-version-list">
+            </div>
+        </div>
+        
+        <div id="docs-show-nav" class="left hidden" style="margin-right: 15px; display: none;">
+            <a class="docs-show-hide-nav" href="" title="Show Sidebar"><span class="icon-arrow-small-right"></span></a>
+        </div>
+
+                        <div id="docs-breadcrumbs">
+            <a href="/doc/refman/5.6/en/">MySQL 5.6 参考手册</a> &nbsp;/&nbsp;
+                            <span id="breadcrumbs-link"><a href="" id="show-breadcrumbs">...</a> &nbsp;/&nbsp;</span>
+                <span class="hidden" id="hidden-breadcrumbs">
+                                                        <a href="replication.html">主从同步</a> &nbsp;/&nbsp;
+                                                            <a href="replication-configuration.html">主从同步配置</a> &nbsp;/&nbsp;
+                                                            <a href="replication-formats.html">主从同步格式</a> &nbsp;/&nbsp;
+                                                                                        </span>
+                                        基于行的日志和主从同步
+                                    </div>
+        
+        <div id="docs-body">
+        
+<div class="section">
+<div class="titlepage">
+<div>
+<div>
+<h4 class="title"><a name="replication-rbr-usage"></a>17.1.2.2&nbsp;基于行的日志和主从同步</h4>
+
+</div>
+
+</div>
+
+</div>
+<p>
+        MySQL使用基于语句的日志，基于行的日志或混合格式日志。使用的二进制日志的类型影响着日志的大小和效率。因此选择RBR还是SBR依赖于你的应用程序和应用环境。
+		这部分描述在使用基于行的主从同步时一只的问题，并讨论在主从同步时关于基于行的主从同步的一些最佳实践。
+      </p><p>
+	    更多的信息可以参见章节 17.1.2，“主从同步格式” 和 章节 17.1.2.1，“SBR和RBR在主从同步时的优点和缺点”
+      </p><p>
+	    关于MySQL集群在主从同步时会遇到的问题可以参考章节 18.6.3，“MySQL集群主从同步已知的问题”
+      
+</p>
+<div class="itemizedlist">
+<ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><a name="replication-rbr-usage-temptables"></a><b>Row-based logging of temporary tables.&nbsp;</b>
+              正如
+              <a class="xref" href="replication-features-temptables.html" title="17.4.1.23&nbsp;Replication and Temporary Tables">章节17.4.1.23, “主从同步和临时表”</a>中讲的一样,
+			  临时表在使用基于行的主从同步时不会被进行同步，涉及临时表的“<span class="quote">安全</span>” 语句用基于语句的格式进行日志记录。更多的信息参见 
+			  <a class="xref" href="replication-sbr-rbr.html" >章节&nbsp;17.1.2.1, “SBR和RBR的优缺点”</a>.
+            </p><p>
+			临时表在使用基于行的主从同步时不进行同步因为不需要同步。另外，因为临时表只能被创建它的线程进行读取，对它们进行同步几乎没有任何益处，即使是在使用基于语句的主从同步机制的时候也一样无益。
+          </p><p>
+            在MySQL 5.6中, 你可以从基于语句的格式切换到基于行的格式即使此时临时表已经被创建好了。 然而,当使用基于行的主从同步时，MySQL服务器不能不能确定一个给定的临时表被创建时是哪个日志格式在生效。
+			基于这个原因，服务器在给定的终端会话结束时为每一个临时表记录一个<code class="literal">DROP TEMPORARY
+            TABLE IF EXISTS</code></a> 语句。这意味着很可能一个不需要的<code class="literal">DROP TEMPORARY TABLE</code>
+            语句会在某些场合下被记录到日志中，因为使用了<code class="literal">IF EXISTS</code>选项，所以这个语句不会引发任何错误。 
+          </p><p>
+            In MySQL 5.6.6 和更早期的版本, 开启<a class="link" href="replication-options-gtids.html#option_mysqld_disable-gtid-unsafe-statements"><code class="option">--disable-gtid-unsafe-statements</code></a>
+			选项且使用是基于行的二进制日志时会导致任何非事务性的DML语句(包括临时表的)触发一个错误，尽管事实上它们并没有被写入到二进制日志中。在MySQL 5.6.7 及以后, 这样的语句在使用
+			<code class="literal">binlog_format=ROW</code></a>时是被允许的，只要被影响到的非事务性的表都是临时表。
+          </p></li><li class="listitem"><p><b>基于行的日志和非事务性的表的同步。&nbsp;</b>
+		      当很多行被影响到时，被改变的集合被分割成多个事件；当语句提交时，这些事件都会被写入到二进制日志中。当在从服务器上执行时，所有涉及到的表都被加上了一个表级锁，然后数据行将批量的被应用上去（
+			  这种方式可能有效也可能无效，依赖于从服务器上被同步数据的表所使用的引擎）。
+            </p></li><li class="listitem"><p><b>延迟和二进制日志大小&nbsp;</b>
+			  因为基于行的日志记录方式将每一行的改变都记录到日志中，所以它的大小会增长的飞快。这将明显的增加匹配主服务器上的改变被应用到从服务器上的时间。你需要意识到你的应用程序中可能存在的延迟情况。
+            </p></li><li class="listitem"><p><b>读取二进制日志.&nbsp;</b>
+			  <span class="command"><strong>mysqlbinlog</strong></span></a> 工具使用<code class="literal">BINLOG</code>语句显示日志中基于行的事件. 这个语句以base64编码的字符串来显示事件，从而无法直接看出事件的
+			  具体内容。当使用了<code class="option">--base64-output=DECODE-ROWS</code>和<code class="option">--verbose</code><选项时,<strong>mysqlbinlog</strong>会将二进制日志格式化成人类可读的格式。
+			  当二进制日志事件被以基于行的格式进行记录，而你想读取它或者从主从同步或数据库失败中进行恢复时，你可以使用这个命令来读取二进制日志内容。更多内容请看
+			  <a class="xref" href="mysqlbinlog-row-events.html" >章节&nbsp;4.6.8.2, “mysqlbinlog 显示行事件”</a>.
+            </p></li><li class="listitem"><p><b>二进制日志执行错误和slave_exec_mode.&nbsp;</b>
+              如果<a class="link" href="replication-options-slave.html#sysvar_slave_exec_mode"><code class="literal">slave_exec_mode</code></a> 选项值为<code class="literal">IDEMPOTENT</code>, 当因原始行数据找不到而
+			  导致应用改变同步到从服务器失败的错误不会触发一个错误事件或引发主从同步失败。这意味着更新操作并未应用到从服务器上，所以主服务器和从服务器数据将不再是同步的。 数据延迟和在<code class="literal">slave_exec_mode</code>
+              选项取<code class="literal">IDEMPOTENT</code>前提下使用RBR同步非事务性的表会导致主服务器和从服务器数据上进一步不同步。 关于<code class="literal">slave_exec_mode</code>选项的更多内容请参考
+              <a class="xref" href="server-system-variables.html" >章节&nbsp;5.1.4, “服务器系统变量”</a>.
+</p>
+<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
+
+<div class="admon-title">
+Note
+</div>
+<p>
+              <a class="link" href="replication-options-slave.html#sysvar_slave_exec_mode"><code class="literal">slave_exec_mode=IDEMPOTENT</code></a>
+              is generally useful only for circular replication or
+              multi-master replication with MySQL Cluster, for which
+              <code class="literal">IDEMPOTENT</code> is the default value.
+</p>
+</div>
+<p>
+            For other scenarios, setting
+            <a class="link" href="replication-options-slave.html#sysvar_slave_exec_mode"><code class="literal">slave_exec_mode</code></a> to
+            <code class="literal">STRICT</code> is normally sufficient; this is
+            the default value.
+
+            
+</p>
+<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
+
+<div class="admon-title">
+Note
+</div>
+<p>
+              Formerly, the default value when using MySQL Cluster was
+              <code class="literal">slave_exec_mode=IDEMPOTENT</code>, but this is
+              no longer the case in MySQL Cluster NDB 7.3 and later.
+</p>
+</div>
+</li><li class="listitem"><p><b>Lack of binary log checksums.&nbsp;</b>
+              RBL does not use checksums, so network, disk, and other
+              errors may not be identified when processing the binary
+              log. To ensure that data is transmitted without network
+              corruption use SSL for replication connections. The
+              <a class="link" href="change-master-to.html" title="13.4.2.1&nbsp;CHANGE MASTER TO Syntax"><code class="literal">CHANGE MASTER TO</code></a> statement
+              has options to enable replication over SSL. See also
+              <a class="xref" href="change-master-to.html" title="13.4.2.1&nbsp;CHANGE MASTER TO Syntax">Section&nbsp;13.4.2.1, “CHANGE MASTER TO Syntax”</a>, for general
+              information about setting up MySQL with SSL.
+            </p></li><li class="listitem"><p><b>Filtering based on server ID not supported.&nbsp;</b>
+              In MySQL 5.6, you can filter based on server
+              ID by using the <code class="literal">IGNORE_SERVER_IDS</code>
+              option for the <a class="link" href="change-master-to.html" title="13.4.2.1&nbsp;CHANGE MASTER TO Syntax"><code class="literal">CHANGE MASTER
+              TO</code></a> statement. This option works with
+              statement-based and row-based logging formats. Another
+              method to filter out changes on some slaves is to use a
+              <code class="literal">WHERE</code> clause that includes the relation
+              <code class="literal">@@server_id &lt;&gt;
+              <em class="replaceable"><code>id_value</code></em></code> clause with
+              <a class="link" href="update.html" title="13.2.11&nbsp;UPDATE Syntax"><code class="literal">UPDATE</code></a> and
+              <a class="link" href="delete.html" title="13.2.2&nbsp;DELETE Syntax"><code class="literal">DELETE</code></a> statements. For
+              example, <code class="literal">WHERE @@server_id &lt;&gt; 1</code>.
+              However, this does not work correctly with row-based
+              logging. To use the
+              <a class="link" href="server-system-variables.html#sysvar_server_id"><code class="literal">server_id</code></a> system variable
+              for statement filtering, use statement-based logging.
+            </p></li><li class="listitem"><p><b>Database-level replication options.&nbsp;</b>
+              The effects of the
+              <a class="link" href="replication-options-slave.html#option_mysqld_replicate-do-db"><code class="option">--replicate-do-db</code></a>,
+              <a class="link" href="replication-options-slave.html#option_mysqld_replicate-ignore-db"><code class="option">--replicate-ignore-db</code></a>, and
+              <a class="link" href="replication-options-slave.html#option_mysqld_replicate-rewrite-db"><code class="option">--replicate-rewrite-db</code></a>
+              options differ considerably depending on whether row-based
+              or statement-based logging is used. Therefore, it is
+              recommended to avoid database-level options and instead
+              use table-level options such as
+              <a class="link" href="replication-options-slave.html#option_mysqld_replicate-do-table"><code class="option">--replicate-do-table</code></a> and
+              <a class="link" href="replication-options-slave.html#option_mysqld_replicate-ignore-table"><code class="option">--replicate-ignore-table</code></a>.
+              For more information about these options and the impact
+              replication format has on how they operate, see
+              <a class="xref" href="replication-options.html" title="17.1.4&nbsp;Replication and Binary Logging Options and Variables">Section&nbsp;17.1.4, “Replication and Binary Logging Options and Variables”</a>.
+            </p></li><li class="listitem"><p><b>RBL, nontransactional tables, and stopped slaves.&nbsp;</b>
+              When using row-based logging, if the slave server is
+              stopped while a slave thread is updating a
+              nontransactional table, the slave database can reach an
+              inconsistent state. For this reason, it is recommended
+              that you use a transactional storage engine such as
+              <a class="link" href="innodb-storage-engine.html" title="Chapter&nbsp;14&nbsp;The InnoDB Storage Engine"><code class="literal">InnoDB</code></a> for all tables
+              replicated using the row-based format. Use of
+              <a class="link" href="stop-slave.html" title="13.4.2.6&nbsp;STOP SLAVE Syntax"><code class="literal">STOP SLAVE</code></a> or
+              <a class="link" href="stop-slave.html" title="13.4.2.6&nbsp;STOP SLAVE Syntax"><code class="literal">STOP SLAVE
+              SQL_THREAD</code></a> prior to shutting down the slave
+              MySQL server helps prevent issues from occurring, and is
+              always recommended regardless of the logging format or
+              storage engine you use.
+</p></li></ul>
+</div>
+
+</div>
+<br>
+        </div>
+
+                <div id="docs-in-page-nav-container">
+            <div id="docs-in-page-nav">
+                
+    <a href="replication-sbr-rbr.html" title="Previous: Advantages and Disadvantages of Statement-Based and Row-Based
+Replication"><span class="icon-chevron-left"></span> PREV</a> &nbsp;
+<a href="index.html" title="Start"> HOME</a> &nbsp;
+        <a href="replication-formats.html" title="Up: Replication Formats"> UP</a> &nbsp;
+    <a href="replication-rbr-safe-unsafe.html" title="Next: Determination of Safe and Unsafe Statements in Binary Logging">NEXT <span class="icon-chevron-right"></span></a>
+            </div>
+        </div>
+        
+         
+
+                     
+
+              </div>

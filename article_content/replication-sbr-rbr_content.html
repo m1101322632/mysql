@@ -1,0 +1,221 @@
+<div id="docs-main-inner">
+
+                <div class="right" id="docs-version-nav">
+            <a href="" id="docs-version-nav-toggle">version 5.6
+            <span class="icon-chevron-down"></span></a>
+            <div id="docs-version-list">
+                                                 
+                            </div>
+        </div>
+        
+        <div id="docs-show-nav" class="left hidden" style="margin-right: 15px;">
+            <a class="docs-show-hide-nav" href="" title="Show Sidebar"><span class="icon-arrow-small-right"></span></a>
+        </div>
+
+                        <div id="docs-breadcrumbs">
+            <a href="/doc/refman/5.6/en/">MySQL 5.6 参考手册</a> &nbsp;/&nbsp;
+                            <span id="breadcrumbs-link"><a href="" id="show-breadcrumbs">...</a> &nbsp;/&nbsp;</span>
+                <span class="hidden" id="hidden-breadcrumbs">
+                                                        <a href="replication.html">主从同步</a> &nbsp;/&nbsp;
+                                                            <a href="replication-configuration.html">主从同步配置</a> &nbsp;/&nbsp;
+                                                            <a href="replication-formats.html">主从同步格式</a> &nbsp;/&nbsp;
+                                                                                        </span>基于语句和基于行的主从同步的优缺点
+                                    </div>
+        
+        <div id="docs-body">
+        
+<div class="section">
+
+<div class="titlepage">
+<div>
+<div>
+<h4 class="title"><a name="replication-sbr-rbr"></a>17.1.2.1&nbsp;基于语句和基于行的主从同步的优缺点</h4>
+</div>
+</div>
+</div>
+<a class="indexterm" name="idm139767688080032"></a><a class="indexterm" name="idm139767688078576"></a><p>
+        每一个二进制日志格式都有自己的优点和缺点。对于大多数用户来说，混合复制模式应该可以提供最好的数据完整性和性能。然而，如果你
+        想在执行特定的任务时充分利用基于语句或基于行的主从同步的优点时，你可以使用本章提供的关于它们之间优缺点的对照信息以确定哪个是
+		你更需要的。
+</p>
+<div class="itemizedlist">
+<ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
+            <a class="link" href="replication-sbr-rbr.html#replication-sbr-rbr-sbr-advantages" title="Advantages of statement-based replication">基于语句的主从同步的优点</a>
+          </p></li><li class="listitem"><p>
+            <a class="link" href="replication-sbr-rbr.html#replication-sbr-rbr-sbr-disadvantages" title="Disadvantages of statement-based replication">基于语句的主从同步的缺点</a>
+          </p></li><li class="listitem"><p>
+            <a class="link" href="replication-sbr-rbr.html#replication-sbr-rbr-rbr-advantages" title="Advantages of row-based replication">基于行的主从同步的优点</a>
+          </p></li><li class="listitem"><p>
+            <a class="link" href="replication-sbr-rbr.html#replication-sbr-rbr-rbr-disadvantages" title="Disadvantages of row-based replication">基于行的主从同步的缺点</a>
+</p></li></ul>
+</div>
+<h5><a name="replication-sbr-rbr-sbr-advantages"></a>基于语句的主从同步的优点</h5>
+<a class="indexterm" name="idm139767688067216"></a>
+<div class="itemizedlist">
+<ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
+            这是一个自MySQL3.23开始就存在的成熟的技术。
+          </p></li><li class="listitem"><p>
+		    只有较少量的数据被写入到日志文件中。当更新或者删除语句影响到很多行时，这个技术导致只需要在二进制日志中占用很少量的存储空间。这个同样意味着从备份中进行获取和重
+			建可以更快的完成。          </p></li>
+			<li class="listitem"><p>
+			日志文件中包含了产生任何改变的语句，所以它可以被用来审核数据库。
+</p></li></ul>
+</div>
+<h5><a name="replication-sbr-rbr-sbr-disadvantages"></a>基于语句的主从同步的缺点</h5>
+<a class="indexterm" name="idm139767688060832"></a>
+<div class="itemizedlist">
+<ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><b>对于基于语句的日志有些语句是不安全的。&nbsp;</b><a class="indexterm" name="idm139767688058176"></a><a class="indexterm" name="idm139767688056656"></a>
+              不是所有的修改数据的语句都可以使用基于语句的主从同步进行复制。任何非确定性的行为在使用基于语句的主从同步时都会变得非常困难。类似的DML语句示例如下：
+</p>
+<div class="itemizedlist">
+<ul class="itemizedlist" style="list-style-type: circle; "><li class="listitem"><p>
+               一个依赖于用户自定义函数和存储过程的语句是非确定性的，因为自定义函数或存储过程的返回值不仅仅依赖于传入的参数的值。 (基于行的主从同步是简单的将用户自定义函数或存储过程的返回值
+			     复制过来，所以它们产生的影响在主服务器和从服务器上是一致的。详见
+                <a class="xref" href="replication-features-invoked.html" title="17.4.1.12&nbsp;Replication of Invoked Features">章节&nbsp;17.4.1.12, “调用功能的主从同步”</a>。
+              </p></li><li class="listitem"><p>
+			    使用了不包含ORDER BY的LIMIT的DELETE和UPDATE语句是具有非确定性的。详见章节 17.4.1.17，“主从同步和LIMIT”.
+              </p></li><li class="listitem"><p>
+			    使用了下面函数的语句无法正确的通过基于语句的主从同步机制进行数据同步：
+</p>
+<div class="itemizedlist">
+<ul class="itemizedlist" style="list-style-type: square; "><li class="listitem"><p>
+                    <a class="link" href="string-functions.html#function_load-file"><code class="literal">LOAD_FILE()</code></a>
+                  </p></li><li class="listitem"><p>
+                    <a class="link" href="miscellaneous-functions.html#function_uuid"><code class="literal">UUID()</code></a>,
+                    <a class="link" href="miscellaneous-functions.html#function_uuid-short"><code class="literal">UUID_SHORT()</code></a>
+                  </p></li><li class="listitem"><p>
+                    <a class="link" href="information-functions.html#function_user"><code class="literal">USER()</code></a>
+                  </p></li><li class="listitem"><p>
+                    <a class="link" href="information-functions.html#function_found-rows"><code class="literal">FOUND_ROWS()</code></a>
+                  </p></li><li class="listitem"><p>
+                    <a class="link" href="date-and-time-functions.html#function_sysdate"><code class="literal">SYSDATE()</code></a> (unless
+                    both the master and the slave are started with the
+                    <a class="link" href="server-options.html#option_mysqld_sysdate-is-now"><code class="option">--sysdate-is-now</code></a>
+                    option)
+                  </p></li><li class="listitem"><p>
+                    <a class="link" href="miscellaneous-functions.html#function_get-lock"><code class="literal">GET_LOCK()</code></a>
+                  </p></li><li class="listitem"><p>
+                    <a class="link" href="miscellaneous-functions.html#function_is-free-lock"><code class="literal">IS_FREE_LOCK()</code></a>
+                  </p></li><li class="listitem"><p>
+                    <a class="link" href="miscellaneous-functions.html#function_is-used-lock"><code class="literal">IS_USED_LOCK()</code></a>
+                  </p></li><li class="listitem"><p>
+                    <a class="link" href="miscellaneous-functions.html#function_master-pos-wait"><code class="literal">MASTER_POS_WAIT()</code></a>
+                  </p></li><li class="listitem"><p>
+                    <a class="link" href="mathematical-functions.html#function_rand"><code class="literal">RAND()</code></a>
+                  </p></li><li class="listitem"><p>
+                    <a class="link" href="miscellaneous-functions.html#function_release-lock"><code class="literal">RELEASE_LOCK()</code></a>
+                  </p></li><li class="listitem"><p>
+                    <a class="link" href="miscellaneous-functions.html#function_sleep"><code class="literal">SLEEP()</code></a>
+                  </p></li><li class="listitem"><p>
+                    <a class="link" href="information-functions.html#function_version"><code class="literal">VERSION()</code></a>
+</p></li></ul>
+</div>
+<p>
+                然而，其他的函数（包括NOW()）都可以通过基于语句的主从同步机制正确的进行数据同步。详见章节 17.4.1.16，“主从同步和系统函数”。
+              </p></li></ul>
+</div>
+<p>
+            不能通过基于行的主从同步进行同步的语句在记录入日志时会伴随着一个像下面一样的警告：
+          </p><pre class="programlisting">[Warning] 使用基于语句的二进制日志格式记录当前语句是不安全的。
+</pre><p>
+			在同样的场景下在客户端也会发出类似的一个警告。客户端可以使用SHOW WARNINGS 来显示这个警告。
+          </p></li><li class="listitem"><p>
+            <a class="link" href="insert.html" title="13.2.5&nbsp;INSERT Syntax"><code class="literal">INSERT ...
+            SELECT</code></a> 语句需要一个比基于行的主从复制更大的行级锁。
+          </p></li><li class="listitem"><p>
+            <a class="link" href="update.html" title="13.2.11&nbsp;UPDATE Syntax"><code class="literal">UPDATE</code></a> 语句在使用基于行的主从同步时需要进行一次全表扫描， 
+			(因为在where语句中没有使用到索引) 必须锁定很大一部分行。
+          </p></li><li class="listitem"><p>
+		    对于Innodb引擎来说： 一个使用了AUTO_INCREMENT关键词的INSERT语句会阻塞其他与其不冲突的INSERT语句。
+          </p></li><li class="listitem"><p>
+		    对于复杂的语句，语句必须在行被更新前在从服务器上呗计算和执行。使用基于行的主从同步时，从服务器仅仅需要去更新收到影响的行，而不是执行整条语句。
+          </p></li><li class="listitem"><p>
+		    如果在从服务器上发生计值错误，特别是在执行复合语句时，基于语句的主从同步可能随着时间的流逝在影响的行上慢慢的增加误差。详见章节 17.4.1.28，“主从同步期间从服务器发生的错误”
+            
+          </p></li><li class="listitem"><p>
+		    像<code class="literal">NOW()</code>一样存储其函数执行结果。但对于存储过程来说不是这样。
+          </p></li><li class="listitem"><p>
+		    确定性的用户自定义函数必须在从服务器上被应用（这里可能是指定义对应的函数）。
+          </p></li><li class="listitem"><p>
+		    主从服务器上的表定义必须几乎完全相同。详见章节 17.4.1.10 ，“在主服务器和从服务器上表定义不一样的前提下进行主从同步”。
+</p></li></ul>
+</div>
+<h5><a name="replication-sbr-rbr-rbr-advantages"></a>Advantages of row-based replication</h5>
+<a class="indexterm" name="idm139767687986576"></a>
+<div class="itemizedlist">
+<ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
+            所有的改变都可以被同步。这是最安全的主从同步方式。
+</p>
+<div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
+
+<div class="admon-title">
+注意：
+</div>
+<p>
+             使用语句在mysql修改的信息，例如GRANT、REVOKE、修改触发器或存储例程（包含存储过程）和视图在使用基于语句的主从同步时都会被同步到从服务器上。
+            </p><p>
+			  对于CREATE TABLE ... SELECT语句，会产生一个CREATE的表定义语句，至于SELECT里面的数据会以基于行的主从同步的格式进行数据同步。
+
+</div>
+</li><li class="listitem"><p>
+            这些技术和其他的大多数数据管理系统使用的是一样的；其他系统上的相关知识可以沿用到MYSQL上。
+          </p></li><li class="listitem"><p>
+		    对于接下来的这些语句，在主服务器上需要更少的行级锁，从而实现高并发的特性：
+</p>
+<div class="itemizedlist">
+<ul class="itemizedlist" style="list-style-type: circle; "><li class="listitem"><p>
+                <a class="link" href="insert-select.html" title="13.2.5.1&nbsp;INSERT ... SELECT Syntax"><code class="literal">INSERT
+                ... SELECT</code></a>
+              </p></li><li class="listitem"><p>
+                <a class="link" href="insert.html" title="13.2.5&nbsp;INSERT Syntax"><code class="literal">INSERT</code></a> statements with
+                <code class="literal">AUTO_INCREMENT</code>
+              </p></li><li class="listitem"><p>
+			    where语句中没有使用键或检索的行中大多数都没有被修改的UPDATE或DELETE语句。
+</p></li></ul>
+</div>
+</li><li class="listitem"><p>
+            在从服务器上对于任何的INSERT、UPDATE、DELETE语句最好能锁定更少的行。
+</p></li></ul>
+</div>
+<h5><a name="replication-sbr-rbr-rbr-disadvantages"></a>基于行的主从同步的缺点</h5>
+<a class="indexterm" name="idm139767687959888"></a>
+<div class="itemizedlist">
+<ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
+            RBR针对于要记录到日志里的数据会产生更多的数据。为了同步一个DML语句，基于语句的主从同步只需要将对应的语句写入到二进制日志里。相对而言，
+			基于行的主从同步要将每一个改变的行的记录写入到二进制日志里。如果语句修改了多行数据，基于行的主从同步可能会写入相当多的数据到二进制日志里；
+			即使是对于语句回滚也是会有同样的现象。这同时意味着从备份中获取和恢复数据需要更多的时间。此外,二进制日志将会被长时间的对写入数据的操作进行
+			锁定，这回引发并发性问题。使用<code class="literal">binlog_row_image=minimal</code></a> 来大量减少这个不足。
+          </p></li><li class="listitem"><p>
+            确对于产生非常大的BLOB值的定性的用户自定义函数使用基于行的主从同步会比使用基于语句的主从同步花费更长的时间。这是因为将BLOB列的数据记录到日志中
+            所需的时间要比使用语句生成这些数据的时间长。
+          </p></li><li class="listitem"><p>
+		    你在从服务器上看不到从主服务器上接收并被执行的语句。但是，你可以通过设定<span class="command"><strong>mysqlbinlog</strong>的选项<code class="option">--base64-output=DECODE-ROWS</code>
+            和<code class="option">--verbose</code>来看到哪些数据被改变了。
+          </p><p>
+		    
+            作为另一种选择，可以开启在 MySQL 5.6.2里新增的<code class="literal">binlog_rows_query_log_events</code></a>变量来在使用<strong>mysqlbinlog -vv</strong>进行输出时添加一个<code class="literal">Rows_query</code> 
+			进去。
+          </p></li><li class="listitem"><p>
+		    对于使用MyISAM存储引擎的表，在进行INSERT语句同步时使用RBR要比SBR需要更强壮的一个锁。这意味着使用RBR的主从同步时MyISAM表不支持并发插入。
+</p></li></ul>
+</div>
+
+</div>
+<br>
+        </div>
+
+                <div id="docs-in-page-nav-container">
+            <div id="docs-in-page-nav">
+                
+    <a href="replication-formats.html" title="Previous: Replication Formats"><span class="icon-chevron-left"></span> PREV</a> &nbsp;
+<a href="index.html" title="Start"> HOME</a> &nbsp;
+        <a href="replication-formats.html" title="Up: Replication Formats"> UP</a> &nbsp;
+    <a href="replication-rbr-usage.html" title="Next: Usage of Row-Based Logging and Replication">NEXT <span class="icon-chevron-right"></span></a>
+            </div>
+        </div>
+        
+         
+
+                     
+
+              </div>
